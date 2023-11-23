@@ -228,6 +228,7 @@ if __name__ == '__main__' :
             print("Đã gửi email thành công")
         elif choice == '2' :
             mailbox()
+            
         elif choice == '3' :
             pass 
 
