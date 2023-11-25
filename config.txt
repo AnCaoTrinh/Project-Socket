@@ -1,12 +1,12 @@
 General:
 Username: Quan Nguyen <ntquan@testing.com>
 Password: ahihi
-MailServer: 192.168.1.10
-SMTP: 3333 
-POP3: 4444 
+MailServer: 127.0.0.1
+SMTP: 2225
+POP3: 3335 
 Autoload: 10
 Filter:
-From: ahihi@testing.com, ahuu@testing.com, ... - To folder: Project
-Subject: "urgent", "ASAP", ... - To folder: Important
-Content: "report", "meeting", ...  - To folder: Work
-Spam: "virus", "hack", "crack", ... - To folder: Spam
+From: ahihi@testing.com, ahuu@testing.com - To folder: Project
+Subject: "urgent", "ASAP" - To folder: Important
+Content: "report", "meeting"  - To folder: Work
+Spam: "virus", "hack", "crack" - To folder: Spam
