@@ -178,7 +178,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
         recv_msg = client_socket.recv(1024).decode()
         # bo? qua dong +OK 
         for i in range(5, len(recv_msg), 25):
-            if not files_in_folder(recv_msg[i + 2: i + 2 + 21], folder_path):
+            if not files_in_folder(recv_msg[i + 2: i + 2 + 21], ".\\Mailbox"):
                 # Gửi lệnh RETR để lấy nội dung của email
                 if recv_msg[i] == '.' :
                     break
@@ -188,8 +188,13 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
                     recv_rtr = client_socket.recv(1024)
                     email_content += recv_rtr
                     if recv_rtr.endswith(b'\r\n.\r\n'):
+                        response_text = email_content.decode()
+                        lines = response_text.split("\n")
+                        response_text = '\n'.join(lines[1:])
+                        email_content = response_text.encode()
                         # read file msg neu 
                         from_mail2, subject2, body2 = read_msg_content(email_content)
+                        # print(from_mail2, subject2, body2)
                         for x in filter["From"] :
                             if from_mail2 == x :
                                 email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
@@ -198,16 +203,25 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
                                 break
                         for x in filter["Subject"] :
                             if subject2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x[1: len(x) - 1]]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
                         for x in filter["Content"] :
                             if body2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x[1: len(x) - 1]]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
+                        for x in filter["Spam"] :
+                            if body2.find(x[1: len(x) - 1]) != -1 or subject2.find(x[1: len(x) - 1]) != -1 :
+                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+                                with open(email_file_path, 'wb') as email_file:
+                                    email_file.write(email_content)
+                                break
+                        email_file_path = os.path.join(".\\Mailbox", recv_msg[i + 2: i + 2 + 21])
+                        with open(email_file_path, 'wb') as email_file:
+                                    email_file.write(email_content)
                         break
 
     except Exception as e:
@@ -245,8 +259,8 @@ def read_msg_file(msg_file_path):
         body2 = str(msg.get_body().get_content())
         print(body2)
 
-        # Tạo thư mục để lưu đính kèm (nếu chưa tồn tại)
-        os.makedirs(output_folder, exist_ok=True)
+        # # Tạo thư mục để lưu đính kèm (nếu chưa tồn tại)
+        # os.makedirs(output_folder, exist_ok=True)
 
         # Xử lý đính kèm nếu có
         for idx, part in enumerate(msg.iter_parts()):
@@ -254,6 +268,7 @@ def read_msg_file(msg_file_path):
                 number = int(input("Trong email này có attached file, bạn có muốn save không(1: có , other: không): "))
                 if number == 1 :
                     output_folder = input("Cho biết đường dẫn bạn muốn lưu: ")
+                    output_folder = output_folder[1 : len(output_folder) - 1]
                     attachment_content = part.get_payload(decode=True)
                     # Sử dụng tên file từ 'filename' trong 'Content-Disposition'
                     disposition = part.get("Content-Disposition")
@@ -276,6 +291,10 @@ def read_msg_file(msg_file_path):
                     print(f"\nAttachment saved: {attachment_file_path}")
                 else :
                     break
+        file_name = os.path.basename(msg_file_path)
+        file_path = os.path.join(".\\Seen", file_name)
+        with open(file_path, 'wb') as file :
+            file.write("da xem".encode())
         return from_mail2, subject2, body2
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -297,7 +316,7 @@ def mailbox() :
 if __name__ == '__main__' :
     # doc config
     config = {}
-    with open("C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\config.txt", 'r') as file :
+    with open(".\\config.txt", 'r') as file :
         line = file.readline() # doc General:
         line = file.readline()
         while line:
@@ -333,7 +352,7 @@ if __name__ == '__main__' :
             line = file.readline()
     # print(config)
     ls = config['Username'].split(" ")
-    username = ' '.join(ls[0: len(ls) - 1])
+    username = ls[len(ls) - 1][1:len(ls[len(ls) - 1]) - 1]
     from_mail = ls[len(ls) - 1]
     folder_path = {}
     temp = {}
@@ -343,12 +362,12 @@ if __name__ == '__main__' :
     temp['4'] = 'Work'
     temp['5'] = 'Spam'
 
-    folder_path['Important'] = "C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\Important"
-    folder_path['Project'] = "C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\Project"
-    folder_path['Work'] = "C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\Work"
-    folder_path['Spam'] = "C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\Spam"
-    folder_path['Inbox'] = "C:\\Users\\ASUS ZenBook\\OneDrive\\Máy tính\\python\\Project-Socket\\Inbox"
-    # print(from_mail)
+    folder_path['Important'] = ".\\Important"
+    folder_path['Project'] = ".\\Project"
+    folder_path['Work'] = "\\Work"
+    folder_path['Spam'] = ".\\Spam"
+    folder_path['Inbox'] = ".\\Inbox"
+    # # print(from_mail)
     while True :
         menu()
         choice = input("Bạn chọn: ")
@@ -363,11 +382,11 @@ if __name__ == '__main__' :
             if attachment_file == 1 :
                 number_of_file = int(input("Số lượng file muốn gửi: "))
                 attachment_paths = list()
-                for i in range (attachment_file) :
+                for i in range (number_of_file) :
                     attachment_path = input(f"Cho biết đường dẫn file thứ {i + 1}:")
-                    attachment_paths.append(attachment_path)
+                    attachment_paths.append(attachment_path[1:len(attachment_path) - 1])
                 send_mail(config['MailServer'], int(config['SMTP']), from_mail[1:len(from_mail) - 1], to_email, cc_email, bcc_email
-                        , subject, content, attachment_path)
+                        , subject, content, attachment_paths)
             else :
                 send_mail(config['MailServer'], int(config['SMTP']), from_mail[1:len(from_mail) - 1], to_email, cc_email, bcc_email
                         , subject, content, attachments=None)
@@ -380,17 +399,33 @@ if __name__ == '__main__' :
                 folder = input("Bạn muốn xem folder nào: ")
                 if folder == '0' :
                     break 
-                print("Đây là danh sách các email :")
+                print(f"Đây là danh sách các email trong {temp[folder]} folder:")
                 # duyet qua tat ca cac file trong thu muc 
                 count = 1
                 file_path = {}
                 for file_name in os.listdir(folder_path[temp[folder]]) :
                     file_path[count] = os.path.join(folder_path[temp[folder]], file_name)
-                    from_mail2, subject2 = read_msg_file(file_path)
-                    print(f"{count}.{from_mail2}, {subject2}")
+                    with open (file_path[count], 'rb') as file :
+                        email_content = file.read()
+                        
+                    from_mail2, subject2, body2 = read_msg_content(email_content)
+
+                    if files_in_folder(file_name, ".\\Seen") :
+                        print(f"{count}.{from_mail2}, {subject2}")
+                    else :
+                        print(f"(chưa đọc) {count}.{from_mail2}, {subject2}")
                     count += 1
-                number_file = int(input("Bạn muốn đọc email thứ mấy: ")) 
-                print(f"Nội dung email thứ {number_file}: ")
+                while True :
+                    file_list = os.listdir(folder_path[temp[folder]])
+                    sum_files = len(file_list)
+                    # print(sum_files)
+                    number_file = int(input("Bạn muốn đọc email thứ mấy: "))
+                    if number_file > sum_files or number_file <= 0 :
+                        break 
+                    print(f"Nội dung email thứ {number_file}: ")
+                    read_msg_file(file_path[number_file])
+
+
         else :
             break 
     

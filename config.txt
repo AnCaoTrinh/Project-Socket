@@ -1,6 +1,6 @@
 General:
-Username: Quan Nguyen <ntquan@testing.com>
-Password: ahihi
+Username: anjuly26th@gmail.com <anjuly26th@gmail.com>
+Password: Caoan2004@
 MailServer: 127.0.0.1
 SMTP: 2225
 POP3: 3335 
