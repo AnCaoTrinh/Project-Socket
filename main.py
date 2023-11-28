@@ -100,7 +100,7 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
         # Kết thúc nội dung email
         client_socket.send(f'--{boundary_string}--\r\n'.encode())
         client_socket.send('.\r\n'.encode())  # Dấu chấm kết thúc quá trình truyền dữ liệu thư
-        recv_data = client_socket.recv(1024).decode()
+        # recv_data = client_socket.recv(1024).decode()
         # print(recv_data)
 
     except Exception as e:
@@ -175,14 +175,15 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
         # print(recv_list)
         # Gửi lệnh UIDL để lấy msg 
         client_socket.send(b'UIDL\r\n')
-        recv_msg = client_socket.recv(1024).decode()
+        recv_msgs = client_socket.recv(1024).decode().split("\r\n")
         # bo? qua dong +OK 
-        for i in range(5, len(recv_msg), 25):
-            if not files_in_folder(recv_msg[i + 2: i + 2 + 21], ".\\Mailbox"):
-                # Gửi lệnh RETR để lấy nội dung của email
-                if recv_msg[i] == '.' :
-                    break
-                client_socket.send(f'RETR {recv_msg[i]}\r\n'.encode())
+        for i in range (1, len(recv_msgs) - 1) :
+            temp = recv_msgs[i].split(" ")
+            if len(temp) < 2 :
+                break
+            name_msg = temp[1]
+            if not files_in_folder(name_msg, ".\\Mailbox") :
+                client_socket.send(f'RETR {temp[0]}\r\n'.encode())
                 email_content = b""
                 while True:
                     recv_rtr = client_socket.recv(1024)
@@ -197,32 +198,79 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
                         # print(from_mail2, subject2, body2)
                         for x in filter["From"] :
                             if from_mail2 == x :
-                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
                         for x in filter["Subject"] :
                             if subject2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
                         for x in filter["Content"] :
                             if body2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
                         for x in filter["Spam"] :
                             if body2.find(x[1: len(x) - 1]) != -1 or subject2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 break
-                        email_file_path = os.path.join(".\\Mailbox", recv_msg[i + 2: i + 2 + 21])
+                        email_file_path = os.path.join(".\\Mailbox", name_msg)
                         with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                         break
+        # for i in range(5, len(recv_msg), 25):
+        #     if not files_in_folder(recv_msg[i + 2: i + 2 + 21], ".\\Mailbox"):
+        #         # Gửi lệnh RETR để lấy nội dung của email
+        #         if recv_msg[i] == '.' :
+        #             break
+        #         client_socket.send(f'RETR {recv_msg[i]}\r\n'.encode())
+        #         email_content = b""
+                
+        #         while True:
+        #             recv_rtr = client_socket.recv(1024)
+        #             email_content += recv_rtr
+        #             if recv_rtr.endswith(b'\r\n.\r\n'):
+        #                 response_text = email_content.decode()
+        #                 lines = response_text.split("\n")
+        #                 response_text = '\n'.join(lines[1:])
+        #                 email_content = response_text.encode()
+        #                 # read file msg neu 
+        #                 from_mail2, subject2, body2 = read_msg_content(email_content)
+        #                 # print(from_mail2, subject2, body2)
+        #                 for x in filter["From"] :
+        #                     if from_mail2 == x :
+        #                         email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+        #                         with open(email_file_path, 'wb') as email_file:
+        #                             email_file.write(email_content)
+        #                         break
+        #                 for x in filter["Subject"] :
+        #                     if subject2.find(x[1: len(x) - 1]) != -1 :
+        #                         email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+        #                         with open(email_file_path, 'wb') as email_file:
+        #                             email_file.write(email_content)
+        #                         break
+        #                 for x in filter["Content"] :
+        #                     if body2.find(x[1: len(x) - 1]) != -1 :
+        #                         email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+        #                         with open(email_file_path, 'wb') as email_file:
+        #                             email_file.write(email_content)
+        #                         break
+        #                 for x in filter["Spam"] :
+        #                     if body2.find(x[1: len(x) - 1]) != -1 or subject2.find(x[1: len(x) - 1]) != -1 :
+        #                         email_file_path = os.path.join(folder_path[config[x]], recv_msg[i + 2: i + 2 + 21])
+        #                         with open(email_file_path, 'wb') as email_file:
+        #                             email_file.write(email_content)
+        #                         break
+        #                 email_file_path = os.path.join(".\\Mailbox", recv_msg[i + 2: i + 2 + 21])
+        #                 with open(email_file_path, 'wb') as email_file:
+        #                             email_file.write(email_content)
+        #                 break
 
     except Exception as e:
         print(f"An error occurred: {e}")
