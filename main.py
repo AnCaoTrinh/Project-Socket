@@ -6,6 +6,10 @@ import string
 from email import policy
 from email.parser import BytesParser
 import re
+import threading
+import time
+
+
 def get_content_type(file_path):
     # """Xác định Content-Type cho một định dạng file cụ thể."""
     file_extension = os.path.splitext(file_path)[1].lower()
@@ -309,6 +313,11 @@ def read_msg_file(msg_file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def autoSave(sleep_time: int,pop3_server, pop3_port, username, password, folder_path, config, filter) :
+    while True:
+        get_mail(pop3_server, pop3_port, username, password, folder_path, config, filter)
+        time.sleep(sleep_time) 
+
 def menu() :
     print("""Vui lòng chọn Menu:
 1. Để gửi email
@@ -378,6 +387,8 @@ if __name__ == '__main__' :
     folder_path['Spam'] = ".\\Spam"
     folder_path['Inbox'] = ".\\Inbox"
     # # print(from_mail)
+    thread = threading.Thread(target= autoSave, args=(10, config['MailServer'], int(config['POP3']), username, config['Password'], folder_path, config, filter,),daemon=True)
+    thread.start()
     while True :
         menu()
         choice = input("Bạn chọn: ")
@@ -403,8 +414,6 @@ if __name__ == '__main__' :
             print("Đã gửi email thành công")
         elif choice == '2' :
             mailbox()
-            # luc nay get mail 
-            get_mail(config['MailServer'], int(config['POP3']), username, config['Password'], folder_path, config, filter) 
             while True :
                 folder = input("Bạn muốn xem folder nào: ")
                 if folder == '0' :
