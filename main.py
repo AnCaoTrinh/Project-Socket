@@ -185,6 +185,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
             if not files_in_folder(name_msg, ".\\Mailbox") :
                 client_socket.send(f'RETR {temp[0]}\r\n'.encode())
                 email_content = b""
+                ok = False
                 while True:
                     recv_rtr = client_socket.recv(1024)
                     email_content += recv_rtr
@@ -201,25 +202,33 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
                                 email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
+                                ok = True
                                 break
                         for x in filter["Subject"] :
                             if subject2.find(x[1: len(x) - 1]) != -1 :
                                 email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
+                                ok = True
                                 break
                         for x in filter["Content"] :
                             if body2.find(x[1: len(x) - 1]) != -1 :
                                 email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
+                                ok = True
                                 break
                         for x in filter["Spam"] :
                             if body2.find(x[1: len(x) - 1]) != -1 or subject2.find(x[1: len(x) - 1]) != -1 :
                                 email_file_path = os.path.join(folder_path[config[x]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
+                                ok = True
                                 break
+                        if not ok :
+                            email_file_path = os.path.join(".\\Inbox", name_msg)
+                            with open(email_file_path, 'wb') as email_file:
+                                    email_file.write(email_content)
                         email_file_path = os.path.join(".\\Mailbox", name_msg)
                         with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
