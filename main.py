@@ -261,7 +261,8 @@ def read_msg_file(msg_file_path):
         print(f"From: {msg['From']}")
         print(f"To: {msg['To']}")
         print(f"Cc: {msg['Cc']}")
-        print(f"Bcc: {msg['Bcc']}")
+        if msg['Bcc'] :
+            print(f"Bcc: {msg['Bcc']}")
 
         # In nội dung email
         print("\nBody:")
@@ -373,7 +374,7 @@ if __name__ == '__main__' :
 
     folder_path['Important'] = ".\\Important"
     folder_path['Project'] = ".\\Project"
-    folder_path['Work'] = "\\Work"
+    folder_path['Work'] = ".\\Work"
     folder_path['Spam'] = ".\\Spam"
     folder_path['Inbox'] = ".\\Inbox"
     # # print(from_mail)
