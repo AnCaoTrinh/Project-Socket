@@ -8,7 +8,7 @@ from email.parser import BytesParser
 import re
 import threading
 import time
-
+import json
 
 def get_content_type(file_path):
     # """Xác định Content-Type cho một định dạng file cụ thể."""
@@ -150,7 +150,7 @@ def read_msg_content(msg_content):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def get_mail(pop3_server, pop3_port, username, password, folder_path, config, filter):
+def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
     try:
         # Kết nối đến máy chủ POP3
         client_socket = socket.create_connection((pop3_server, pop3_port))
@@ -201,36 +201,36 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config, fi
                         # read file msg neu 
                         from_mail2, subject2, body2 = read_msg_content(email_content)
                         # print(from_mail2, subject2, body2)
-                        for x in filter["From"] :
+                        for x in config["Filter"]["From"].split(", ") :
                             if from_mail2 == x :
-                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
+                                email_file_path = os.path.join(folder_path[config["Filter"]["ToFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in filter["Subject"] :
-                            if subject2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
+                        for x in config["Filter"]["Subject"].split(", ") :
+                            if subject2.find(x) != -1 :
+                                email_file_path = os.path.join(folder_path[config["Filter"]["SubjectFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in filter["Content"] :
-                            if body2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
+                        for x in config["Filter"]["Content"].split(", ") :
+                            if body2.find(x) != -1 :
+                                email_file_path = os.path.join(folder_path[config["Filter"]["ContentFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in filter["Spam"] :
-                            if body2.find(x[1: len(x) - 1]) != -1 or subject2.find(x[1: len(x) - 1]) != -1 :
-                                email_file_path = os.path.join(folder_path[config[x]], name_msg)
+                        for x in config["Filter"]["Spam"].split(", ") :
+                            if body2.find(x) != -1 or subject2.find(x) != -1 :
+                                email_file_path = os.path.join(folder_path[config["Filter"]["SpamFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
                         if not ok :
-                            email_file_path = os.path.join(".\\Inbox", name_msg)
+                            email_file_path = os.path.join(folder_path["Inbox"], name_msg)
                             with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                         email_file_path = os.path.join(".\\Mailbox", name_msg)
@@ -313,9 +313,9 @@ def read_msg_file(msg_file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def autoSave(sleep_time: int,pop3_server, pop3_port, username, password, folder_path, config, filter) :
+def autoSave(sleep_time: int,pop3_server, pop3_port, username, password, folder_path, config) :
     while True:
-        get_mail(pop3_server, pop3_port, username, password, folder_path, config, filter)
+        get_mail(pop3_server, pop3_port, username, password, folder_path, config)
         time.sleep(sleep_time) 
 
 def menu() :
@@ -334,46 +334,12 @@ def mailbox() :
 
 if __name__ == '__main__' :
     # doc config
-    config = {}
-    with open(".\\config.txt", 'r') as file :
-        line = file.readline() # doc General:
-        line = file.readline()
-        while line:
-            # loại bỏ những khoảng trắng 
-            line = line.strip()
+    f = open("config.json", )
+    config = json.load(f)
 
-            if line[0] == '#' or not line :
-                line = file.readline()
-                continue
-            if line == 'Filter:' :
-                break
-            key, value = line.split(": ")
-            config[key] = value
-            line = file.readline()
-        filter = {}
-        line = file.readline()
-        while line :
-            # loại bỏ những khoảng trắng 
-            line = line.strip()
-
-            if line[0] == '#' or not line :
-                line = file.readline()
-                continue
-
-            first , value = line.split(" - To folder: ")
-
-            buffer, Keys = first.split(": ")
-
-            keys = Keys.split(", ")
-            filter[buffer] = keys
-            for x in keys :
-                config[x] = value
-            line = file.readline()
-    # print(config)
-    ls = config['Username'].split(" ")
-    username = ls[len(ls) - 1][1:len(ls[len(ls) - 1]) - 1]
-    from_mail = ls[len(ls) - 1]
     folder_path = {}
+    user_name, from_mail = config["General"]["Username"].split(" ")
+    from_mail = from_mail[1:len(from_mail) - 1]
     temp = {}
     temp['1'] = 'Inbox'
     temp['2'] = 'Project'
@@ -387,7 +353,7 @@ if __name__ == '__main__' :
     folder_path['Spam'] = ".\\Spam"
     folder_path['Inbox'] = ".\\Inbox"
     # # print(from_mail)
-    thread = threading.Thread(target= autoSave, args=(10, config['MailServer'], int(config['POP3']), username, config['Password'], folder_path, config, filter,),daemon=True)
+    thread = threading.Thread(target=autoSave, args=(config["General"]["Autoload"], config["General"]['MailServer'], config["General"]['POP3'], from_mail, config["General"]['Password'], folder_path, config), daemon=True)
     thread.start()
     while True :
         menu()
@@ -406,11 +372,9 @@ if __name__ == '__main__' :
                 for i in range (number_of_file) :
                     attachment_path = input(f"Cho biết đường dẫn file thứ {i + 1}:")
                     attachment_paths.append(attachment_path[1:len(attachment_path) - 1])
-                send_mail(config['MailServer'], int(config['SMTP']), from_mail[1:len(from_mail) - 1], to_email, cc_email, bcc_email
-                        , subject, content, attachment_paths)
+                send_mail(config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachment_paths)
             else :
-                send_mail(config['MailServer'], int(config['SMTP']), from_mail[1:len(from_mail) - 1], to_email, cc_email, bcc_email
-                        , subject, content, attachments=None)
+                send_mail(config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachments=None)
             print("Đã gửi email thành công")
         elif choice == '2' :
             mailbox()
