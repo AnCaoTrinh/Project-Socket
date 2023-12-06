@@ -201,28 +201,28 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
                         # read file msg neu 
                         from_mail2, subject2, body2 = read_msg_content(email_content)
                         # print(from_mail2, subject2, body2)
-                        for x in config["Filter"]["From"].split(", ") :
+                        for x in config["Filter"]["From"] :
                             if from_mail2 == x :
                                 email_file_path = os.path.join(folder_path[config["Filter"]["ToFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in config["Filter"]["Subject"].split(", ") :
+                        for x in config["Filter"]["Subject"] :
                             if subject2.find(x) != -1 :
                                 email_file_path = os.path.join(folder_path[config["Filter"]["SubjectFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in config["Filter"]["Content"].split(", ") :
+                        for x in config["Filter"]["Content"] :
                             if body2.find(x) != -1 :
                                 email_file_path = os.path.join(folder_path[config["Filter"]["ContentFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                                 ok = True
                                 break
-                        for x in config["Filter"]["Spam"].split(", ") :
+                        for x in config["Filter"]["Spam"] :
                             if body2.find(x) != -1 or subject2.find(x) != -1 :
                                 email_file_path = os.path.join(folder_path[config["Filter"]["SpamFolder"]], name_msg)
                                 with open(email_file_path, 'wb') as email_file:

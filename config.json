@@ -8,13 +8,13 @@
         "Autoload": 10
     },
     "Filter": {
-        "From": "ahihi@testing.com, ahuu@testing.com",
+        "From": ["ahihi@testing.com", "ahuu@testing.com"],
         "ToFolder": "Project",
-        "Subject": "urgent, ASAP",
+        "Subject": ["urgent", "ASAP"],
         "SubjectFolder": "Important",
-        "Content": "report, meeting",
+        "Content": ["report", "meeting"],
         "ContentFolder": "Work",
-        "Spam": "virus, hack, crack",
+        "Spam": ["virus", "hack", "crack"],
         "SpamFolder": "Spam"
     }
 }
