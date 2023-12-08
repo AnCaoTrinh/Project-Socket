@@ -50,7 +50,7 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
         # print(recv_mail_from)
 
         # Gửi thông tin người nhận
-        recipients = to_addresses + (cc_addresses or []) + (bcc_addresses or [])
+        recipients = (to_addresses or []) + (cc_addresses or []) + (bcc_addresses or [])
         for recipient in recipients:
             client_socket.send(f'RCPT TO: <{recipient}>\r\n'.encode())
             recv_rcpt_to = client_socket.recv(1024).decode()
@@ -67,9 +67,12 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
         # Chuẩn bị và gửi nội dung email
         client_socket.send(f'Subject: {subject}\r\n'.encode())
         client_socket.send(f'From: {from_address}\r\n'.encode())
-        client_socket.send(f'To: {", ".join(to_addresses)}\r\n'.encode())
+        if to_addresses:
+            client_socket.send(f'To: {", ".join(to_addresses)}\r\n'.encode())
         if cc_addresses:
             client_socket.send(f'Cc: {", ".join(cc_addresses)}\r\n'.encode())
+        if bcc_addresses and not to_addresses:
+            client_socket.send(f'To: undisclosed-recipients\r\n'.encode())
         client_socket.send(f'Content-Type: multipart/mixed; boundary={boundary_string}\r\n'.encode())
         client_socket.send('\r\n'.encode())  # Kết thúc phần header, bắt đầu nội dung email
 
@@ -104,7 +107,7 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
         # Kết thúc nội dung email
         client_socket.send(f'--{boundary_string}--\r\n'.encode())
         client_socket.send('.\r\n'.encode())  # Dấu chấm kết thúc quá trình truyền dữ liệu thư
-        # recv_data = client_socket.recv(1024).decode()
+        recv_data = client_socket.recv(1024).decode()
         # print(recv_data)
 
     except Exception as e:
@@ -250,7 +253,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
 
 
 
-def read_msg_file(msg_file_path):
+def read_msg_file(msg_file_path, user_name):
     try:
         # Đọc nội dung của file .msg
         with open(msg_file_path, 'rb') as file:
@@ -262,12 +265,10 @@ def read_msg_file(msg_file_path):
         subject2 = str(msg['Subject'])
         # In thông tin email
         print(f"Subject: {msg['Subject']}")
-        print(f"From: {msg['From']}")
+        print(f"From: {user_name} <{msg['From']}>")
         print(f"To: {msg['To']}")
-        print(f"Cc: {msg['Cc']}")
-        if msg['Bcc'] :
-            print(f"Bcc: {msg['Bcc']}")
-
+        if msg['Cc'] :
+            print(f"Cc: {msg['Cc']}")
         # In nội dung email
         print("\nBody:")
         body2 = str(msg.get_body().get_content())
@@ -338,8 +339,10 @@ if __name__ == '__main__' :
     config = json.load(f)
 
     folder_path = {}
-    user_name, from_mail = config["General"]["Username"].split(" ")
-    from_mail = from_mail[1:len(from_mail) - 1]
+    index = config["General"]["Username"].find('<')
+    user_name = config["General"]["Username"][0: index]
+    print(user_name)
+    from_mail = config["General"]["Username"][index + 1: len(config["General"]["Username"]) - 1]
     temp = {}
     temp['1'] = 'Inbox'
     temp['2'] = 'Project'
@@ -361,8 +364,15 @@ if __name__ == '__main__' :
         if choice == '1' :
             print("Đây là thông tin soạn email: (nếu không điền vui lòng nhấn enter để bỏ qua)")
             to_email = input("To: ").split(", ")
+            if to_email[0] == '' :
+                to_email = None
             cc_email = input("CC: ").split(", ")
+            if cc_email[0] == '' :
+                cc_email = None
             bcc_email = input("BCC: ").split(", ")
+            if bcc_email[0] == '' :
+                bcc_email = None
+
             subject = input("Subject: ")
             content = input("Content: ")
             attachment_file = int(input("Có gửi kèm file (1. có, 2. không): "))
@@ -406,7 +416,7 @@ if __name__ == '__main__' :
                     if number_file > sum_files or number_file <= 0 :
                         break 
                     print(f"Nội dung email thứ {number_file}: ")
-                    read_msg_file(file_path[number_file])
+                    read_msg_file(file_path[number_file], user_name)
 
 
         else :
