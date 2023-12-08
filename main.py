@@ -189,7 +189,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
             if len(temp) < 2 :
                 break
             name_msg = temp[1]
-            if not files_in_folder(name_msg, ".\\Mailbox") :
+            if not files_in_folder(name_msg, folder_path['Mailbox']) :
                 client_socket.send(f'RETR {temp[0]}\r\n'.encode())
                 email_content = b""
                 ok = False
@@ -236,7 +236,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
                             email_file_path = os.path.join(folder_path["Inbox"], name_msg)
                             with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
-                        email_file_path = os.path.join(".\\Mailbox", name_msg)
+                        email_file_path = os.path.join(folder_path['Mailbox'], name_msg)
                         with open(email_file_path, 'wb') as email_file:
                                     email_file.write(email_content)
                         break
@@ -253,7 +253,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
 
 
 
-def read_msg_file(msg_file_path):
+def read_msg_file(msg_file_path, folder_path):
     try:
         # Đọc nội dung của file .msg
         with open(msg_file_path, 'rb') as file:
@@ -307,7 +307,7 @@ def read_msg_file(msg_file_path):
                 else :
                     break
         file_name = os.path.basename(msg_file_path)
-        file_path = os.path.join(".\\Seen", file_name)
+        file_path = os.path.join(folder_path['Seen'], file_name)
         with open(file_path, 'wb') as file :
             file.write("da xem".encode())
         return from_mail2, subject2, body2
@@ -347,12 +347,18 @@ if __name__ == '__main__' :
     temp['3'] = 'Important'
     temp['4'] = 'Work'
     temp['5'] = 'Spam'
-
-    folder_path['Important'] = ".\\Important"
-    folder_path['Project'] = ".\\Project"
-    folder_path['Work'] = ".\\Work"
-    folder_path['Spam'] = ".\\Spam"
-    folder_path['Inbox'] = ".\\Inbox"
+    if not os.path.exists(f".\\{user_name}"):
+        os.mkdir(f".\\{user_name}")
+    folder_path['Important'] = f".\\{user_name}\\Important"
+    folder_path['Project'] = f".\\{user_name}\\Project"
+    folder_path['Work'] = f".\\{user_name}\\Work"
+    folder_path['Spam'] = f".\\{user_name}\\Spam"
+    folder_path['Inbox'] = f".\\{user_name}\\Inbox"
+    folder_path['Mailbox'] = f".\\{user_name}\\Mailbox"
+    folder_path['Seen'] = f".\\{user_name}\\Seen"
+    for key in folder_path :
+        if not os.path.exists(folder_path[key]):
+            os.mkdir(folder_path[key])
     # # print(from_mail)
     thread = threading.Thread(target=autoSave, args=(config["General"]["Autoload"], config["General"]['MailServer'], config["General"]['POP3'], from_mail, config["General"]['Password'], folder_path, config), daemon=True)
     thread.start()
@@ -414,7 +420,7 @@ if __name__ == '__main__' :
                     if number_file > sum_files or number_file <= 0 :
                         break 
                     print(f"Nội dung email thứ {number_file}: ")
-                    read_msg_file(file_path[number_file])
+                    read_msg_file(file_path[number_file], folder_path)
 
 
         else :
