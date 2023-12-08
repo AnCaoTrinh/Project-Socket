@@ -339,10 +339,8 @@ if __name__ == '__main__' :
     config = json.load(f)
 
     folder_path = {}
-    index = config["General"]["Username"].find('<')
-    user_name = config["General"]["Username"][0: index]
-    print(user_name)
-    from_mail = config["General"]["Username"][index + 1: len(config["General"]["Username"]) - 1]
+    user_name, from_mail = config["General"]["Username"]
+    from_mail = from_mail[1 : len(from_mail) - 1]
     temp = {}
     temp['1'] = 'Inbox'
     temp['2'] = 'Project'
