@@ -31,7 +31,7 @@ def generate_boundary():
 def get_file_size(file_path):
     return os.path.getsize(file_path)
 
-def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=None, bcc_addresses=None, subject='', body='', attachments=None):
+def send_mail(user_name, smtp_server, smtp_port, from_address, to_addresses, cc_addresses=None, bcc_addresses=None, subject='', body='', attachments=None):
     try:
         # Kết nối đến SMTP server
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,7 +45,7 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
         # print(recv1)
 
         # Gửi thông tin email
-        client_socket.send(f'MAIL FROM: <{from_address}>\r\n'.encode())
+        client_socket.send(f'MAIL FROM: {user_name} <{from_address}>\r\n'.encode())
         recv_mail_from = client_socket.recv(1024).decode()
         # print(recv_mail_from)
 
@@ -66,7 +66,7 @@ def send_mail(smtp_server, smtp_port, from_address, to_addresses, cc_addresses=N
 
         # Chuẩn bị và gửi nội dung email
         client_socket.send(f'Subject: {subject}\r\n'.encode())
-        client_socket.send(f'From: {from_address}\r\n'.encode())
+        client_socket.send(f'From: {user_name} <{from_address}>\r\n'.encode())
         if to_addresses:
             client_socket.send(f'To: {", ".join(to_addresses)}\r\n'.encode())
         if cc_addresses:
@@ -253,7 +253,7 @@ def get_mail(pop3_server, pop3_port, username, password, folder_path, config):
 
 
 
-def read_msg_file(msg_file_path, user_name):
+def read_msg_file(msg_file_path):
     try:
         # Đọc nội dung của file .msg
         with open(msg_file_path, 'rb') as file:
@@ -265,7 +265,7 @@ def read_msg_file(msg_file_path, user_name):
         subject2 = str(msg['Subject'])
         # In thông tin email
         print(f"Subject: {msg['Subject']}")
-        print(f"From: {user_name} <{msg['From']}>")
+        print(f"From: {msg['From']}")
         print(f"To: {msg['To']}")
         if msg['Cc'] :
             print(f"Cc: {msg['Cc']}")
@@ -380,9 +380,9 @@ if __name__ == '__main__' :
                 for i in range (number_of_file) :
                     attachment_path = input(f"Cho biết đường dẫn file thứ {i + 1}:")
                     attachment_paths.append(attachment_path[1:len(attachment_path) - 1])
-                send_mail(config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachment_paths)
+                send_mail(user_name, config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachment_paths)
             else :
-                send_mail(config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachments=None)
+                send_mail(user_name, config["General"]['MailServer'], config["General"]['SMTP'], from_mail, to_email, cc_email, bcc_email, subject, content, attachments=None)
             print("Đã gửi email thành công")
         elif choice == '2' :
             mailbox()
@@ -414,7 +414,7 @@ if __name__ == '__main__' :
                     if number_file > sum_files or number_file <= 0 :
                         break 
                     print(f"Nội dung email thứ {number_file}: ")
-                    read_msg_file(file_path[number_file], user_name)
+                    read_msg_file(file_path[number_file])
 
 
         else :
