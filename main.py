@@ -335,8 +335,10 @@ def mailbox() :
 
 if __name__ == '__main__' :
     # doc config
-    f = open("config.json", )
+    f = open("config.json")
     config = json.load(f)
+
+    print(config)
 
     folder_path = {}
     user_name, from_mail = config["General"]["Username"]
@@ -347,15 +349,15 @@ if __name__ == '__main__' :
     temp['3'] = 'Important'
     temp['4'] = 'Work'
     temp['5'] = 'Spam'
-    if not os.path.exists(f".\\{user_name}"):
-        os.mkdir(f".\\{user_name}")
-    folder_path['Important'] = f".\\{user_name}\\Important"
-    folder_path['Project'] = f".\\{user_name}\\Project"
-    folder_path['Work'] = f".\\{user_name}\\Work"
-    folder_path['Spam'] = f".\\{user_name}\\Spam"
-    folder_path['Inbox'] = f".\\{user_name}\\Inbox"
-    folder_path['Mailbox'] = f".\\{user_name}\\Mailbox"
-    folder_path['Seen'] = f".\\{user_name}\\Seen"
+    if not os.path.exists(f".\\{from_mail}"):
+        os.mkdir(f".\\{from_mail}")
+    folder_path['Important'] = f".\\{from_mail}\\Important"
+    folder_path['Project'] = f".\\{from_mail}\\Project"
+    folder_path['Work'] = f".\\{from_mail}\\Work"
+    folder_path['Spam'] = f".\\{from_mail}\\Spam"
+    folder_path['Inbox'] = f".\\{from_mail}\\Inbox"
+    folder_path['Mailbox'] = f".\\{from_mail}\\Mailbox"
+    folder_path['Seen'] = f".\\{from_mail}\\Seen"
     for key in folder_path :
         if not os.path.exists(folder_path[key]):
             os.mkdir(folder_path[key])
