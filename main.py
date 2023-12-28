@@ -10,7 +10,7 @@ import threading
 import time
 import json
 
-def get_content_type(file_path):
+def get_content_type(file_path):    
     # """Xác định Content-Type cho một định dạng file cụ thể."""
     file_extension = os.path.splitext(file_path)[1].lower()
     # print(file_extension)
@@ -338,7 +338,7 @@ if __name__ == '__main__' :
     f = open("config.json")
     config = json.load(f)
 
-    print(config)
+    # print(config)
 
     folder_path = {}
     user_name, from_mail = config["General"]["Username"]
